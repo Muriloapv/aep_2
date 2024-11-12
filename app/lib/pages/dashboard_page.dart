@@ -1,9 +1,4 @@
 import 'package:flutter/material.dart';
-import 'settings_page.dart';
-import 'reports_page.dart';
-import 'about_page.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class DashboardPage extends StatefulWidget {
   @override
@@ -11,27 +6,36 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  List<String> detectedThreats = [];
+  // Lista de mensagens simuladas do chatbot
+  final List<Map<String, String>> messages = [
+    {"sender": "bot", "text": "Olá! Como posso ajudar você hoje?"},
+    {"sender": "user", "text": "Quais são as ameaças recentes?"},
+    {"sender": "bot", "text": "Atualmente, não há novas ameaças detectadas."},
+    {"sender": "user", "text": "Como posso proteger meu sistema?"},
+    {
+      "sender": "bot",
+      "text": "Recomendo manter seu sistema atualizado e usar uma senha forte."
+    },
+    {"sender": "user", "text": "Obrigado!"},
+    {"sender": "bot", "text": "De nada! Estou aqui para ajudar."},
+  ];
 
-  @override
-  void initState() {
-    super.initState();
-    fetchThreats();
-  }
+  final TextEditingController _controller = TextEditingController();
 
-  // Função para buscar ameaças da API (simulação)
-  Future<void> fetchThreats() async {
-    try {
-      final response =
-          await http.get(Uri.parse('https://api.example.com/threats'));
-      if (response.statusCode == 200) {
-        // Suponha que a resposta seja uma lista de ameaças
-        setState(() {
-          detectedThreats = List<String>.from(json.decode(response.body));
-        });
-      }
-    } catch (e) {
-      print("Erro ao buscar ameaças: $e");
+  // Função para adicionar uma nova mensagem
+  void _sendMessage() {
+    if (_controller.text.isNotEmpty) {
+      setState(() {
+        // Adiciona a mensagem do usuário
+        messages.add({"sender": "user", "text": _controller.text});
+
+        // Limpa o campo de entrada de texto
+        _controller.clear();
+
+        // Adiciona uma resposta simulada do bot após o usuário enviar a mensagem
+        messages
+            .add({"sender": "bot", "text": "Esta é uma resposta automática."});
+      });
     }
   }
 
@@ -39,38 +43,60 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('NetWatch - Dashboard'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.settings),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => SettingsPage()),
+        title: Text('NetWatch - Chatbot Simulado'),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              padding: EdgeInsets.all(16.0),
+              itemCount: messages.length,
+              itemBuilder: (context, index) {
+                final message = messages[index];
+                final isBot = message["sender"] == "bot";
+
+                return Align(
+                  alignment:
+                      isBot ? Alignment.centerLeft : Alignment.centerRight,
+                  child: Container(
+                    margin: EdgeInsets.symmetric(vertical: 8.0),
+                    padding: EdgeInsets.all(12.0),
+                    decoration: BoxDecoration(
+                      color: isBot ? Colors.grey[200] : Colors.blue[200],
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: Text(
+                      message["text"]!,
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
-          IconButton(
-            icon: Icon(Icons.report),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => ReportsPage()),
-            ),
-          ),
-          IconButton(
-            icon: Icon(Icons.info),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => AboutPage()),
+          Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    decoration: InputDecoration(
+                      hintText: 'Digite sua mensagem...',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 8),
+                IconButton(
+                  icon: Icon(Icons.send),
+                  color: Colors.blue,
+                  onPressed: _sendMessage, // Chama a função de enviar mensagem
+                ),
+              ],
             ),
           ),
         ],
-      ),
-      body: ListView.builder(
-        itemCount: detectedThreats.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            title: Text(detectedThreats[index]),
-          );
-        },
       ),
     );
   }
